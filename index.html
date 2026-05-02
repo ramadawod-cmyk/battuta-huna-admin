@@ -8,73 +8,125 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --palm: #6f8b6d; --clay: #c97b5c; --brown: #3d2e26;
-      --stone: #9b8f82; --offwhite: #f5f0e8; --white: #ffffff;
+      --palm: #6f8b6d; --clay: #c97b5c; --gold: #e3b96c;
+      --brown: #3d2e26; --stone: #9b8f82;
+      --offwhite: #f5f0e8; --white: #ffffff;
     }
     body { font-family: 'Bricolage Grotesque', sans-serif; background: var(--offwhite); color: var(--brown); min-height: 100vh; }
 
     /* LOGIN */
     #login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-    .login-card { background: var(--white); border: 2px solid rgba(111,139,109,0.3); border-radius: 20px; padding: 40px; width: 100%; max-width: 360px; text-align: center; }
-    .login-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; margin-top: 16px; }
+    .login-card { background: var(--white); border: 2px solid rgba(111,139,109,0.3); border-radius: 20px; padding: 40px; width: 100%; max-width: 340px; text-align: center; }
+    .login-title { font-size: 20px; font-weight: 700; margin: 16px 0 4px; }
     .login-sub { font-family: 'Merriweather', serif; font-style: italic; font-size: 12px; color: var(--stone); margin-bottom: 28px; }
-    .login-input { width: 100%; padding: 12px 16px; border: 1.5px solid rgba(61,46,38,0.15); border-radius: 10px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 14px; color: var(--brown); background: var(--offwhite); outline: none; margin-bottom: 12px; letter-spacing: 0.1em; }
+    .login-input { width: 100%; padding: 12px 16px; border: 1.5px solid rgba(61,46,38,0.15); border-radius: 10px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 14px; color: var(--brown); background: var(--offwhite); outline: none; margin-bottom: 12px; }
     .login-input:focus { border-color: var(--palm); }
     .login-btn { width: 100%; padding: 13px; background: var(--palm); color: var(--white); font-family: 'Bricolage Grotesque', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; border: none; border-radius: 10px; cursor: pointer; }
     .login-error { color: var(--clay); font-size: 12px; margin-top: 8px; }
 
-    /* APP */
-    #app { display: none; }
-    .top-bar { background: var(--white); border-bottom: 1px solid rgba(61,46,38,0.1); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 10; }
-    .top-bar-title { font-size: 15px; font-weight: 700; }
-    .top-bar-sub { font-size: 11px; color: var(--stone); }
-    .logout-btn { font-size: 11px; color: var(--stone); background: none; border: 1px solid rgba(61,46,38,0.15); border-radius: 6px; padding: 5px 12px; cursor: pointer; }
+    /* LAYOUT */
+    #app { display: none; height: 100vh; overflow: hidden; }
+    .layout { display: flex; height: 100vh; }
 
-    .stats-bar { display: flex; gap: 12px; padding: 14px 24px; border-bottom: 1px solid rgba(61,46,38,0.08); background: var(--white); overflow-x: auto; flex-wrap: wrap; }
-    .stat-pill { background: var(--offwhite); border-radius: 20px; padding: 5px 14px; font-size: 12px; color: var(--stone); white-space: nowrap; }
-    .stat-pill strong { color: var(--brown); font-weight: 700; }
+    /* SIDEBAR */
+    .sidebar { width: 240px; flex-shrink: 0; background: var(--brown); color: var(--white); display: flex; flex-direction: column; overflow: hidden; }
+    .sb-header { padding: 18px 16px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 10px; }
+    .sb-title { font-size: 13px; font-weight: 700; }
+    .sb-env { font-size: 10px; color: var(--gold); }
+    .sb-nav { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .sb-section { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.3); padding: 12px 16px 4px; }
+    .sb-item { display: flex; align-items: center; gap: 8px; padding: 8px 16px; font-size: 13px; color: rgba(255,255,255,0.65); cursor: pointer; transition: all 0.15s; user-select: none; }
+    .sb-item:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+    .sb-item.active { background: rgba(111,139,109,0.25); color: var(--white); }
+    .sb-chevron { margin-left: auto; font-size: 10px; opacity: 0.5; transition: transform 0.2s; }
+    .sb-chevron.open { transform: rotate(90deg); }
+    .sb-sub { display: none; }
+    .sb-sub.open { display: block; }
+    .sb-city { padding: 5px 16px 5px 36px; font-size: 12px; color: rgba(255,255,255,0.45); cursor: pointer; display: flex; align-items: center; justify-content: space-between; }
+    .sb-city:hover { color: var(--white); }
+    .sb-city.active { color: var(--gold); font-weight: 600; }
+    .sb-city-count { font-size: 10px; opacity: 0.5; }
+    .sb-footer { padding: 12px 16px; border-top: 1px solid rgba(255,255,255,0.08); }
+    .sb-logout { width: 100%; padding: 7px; background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.55); font-family: 'Bricolage Grotesque', sans-serif; font-size: 11px; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; }
+    .sb-logout:hover { background: rgba(255,255,255,0.1); color: var(--white); }
 
-    .filters { display: flex; gap: 8px; padding: 16px 24px 0; flex-wrap: wrap; }
-    .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid rgba(61,46,38,0.15); background: var(--white); font-family: 'Bricolage Grotesque', sans-serif; font-size: 12px; cursor: pointer; color: var(--stone); transition: all 0.15s; }
-    .filter-btn.active { background: var(--palm); color: var(--white); border-color: var(--palm); }
+    /* MAIN */
+    .main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+    .main-bar { background: var(--white); border-bottom: 1px solid rgba(61,46,38,0.1); padding: 0 24px; height: 52px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .main-title { font-size: 15px; font-weight: 700; }
+    .main-meta { font-size: 11px; color: var(--stone); }
+    .main-body { flex: 1; overflow-y: auto; padding: 20px 24px 40px; }
 
-    .sites-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 16px 24px 40px; }
+    /* STATS */
+    .stats-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .stat-card { background: var(--white); border: 1.5px solid rgba(61,46,38,0.1); border-radius: 12px; padding: 14px 18px; flex: 1; min-width: 100px; }
+    .stat-num { font-size: 26px; font-weight: 700; }
+    .stat-label { font-size: 11px; color: var(--stone); margin-top: 2px; }
+    .stat-card.hi .stat-num { color: var(--palm); }
 
-    .site-card { background: var(--white); border: 1.5px solid rgba(61,46,38,0.1); border-radius: 14px; overflow: hidden; }
-    .site-card:hover { border-color: var(--palm); }
-    .site-card-header { padding: 12px 14px 10px; border-bottom: 1px solid rgba(61,46,38,0.06); }
-    .site-card-city { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); margin-bottom: 2px; }
-    .site-card-name { font-size: 14px; font-weight: 700; }
-    .site-card-badges { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
-    .badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+    /* FILTERS */
+    .filter-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .fb { padding: 5px 13px; border-radius: 20px; border: 1.5px solid rgba(61,46,38,0.15); background: var(--white); font-family: 'Bricolage Grotesque', sans-serif; font-size: 11px; cursor: pointer; color: var(--stone); }
+    .fb.active { background: var(--palm); color: var(--white); border-color: var(--palm); }
+
+    /* SITE TABLE */
+    .tbl { background: var(--white); border: 1.5px solid rgba(61,46,38,0.1); border-radius: 14px; overflow: hidden; }
+    .tbl-head { display: grid; grid-template-columns: 2fr 1fr 70px 70px 140px; padding: 9px 16px; border-bottom: 1px solid rgba(61,46,38,0.08); background: var(--offwhite); }
+    .tbl-head span { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stone); }
+    .tbl-row { border-bottom: 1px solid rgba(61,46,38,0.06); }
+    .tbl-row:last-child { border-bottom: none; }
+    .tbl-main { display: grid; grid-template-columns: 2fr 1fr 70px 70px 140px; padding: 10px 16px; align-items: center; cursor: pointer; transition: background 0.1s; }
+    .tbl-main:hover { background: rgba(111,139,109,0.04); }
+    .tbl-name { font-size: 13px; font-weight: 600; }
+    .tbl-city { font-size: 11px; color: var(--stone); }
+    .badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; display: inline-block; }
     .badge-ok { background: rgba(111,139,109,0.12); color: var(--palm); }
-    .badge-missing { background: rgba(201,123,92,0.12); color: var(--clay); }
+    .badge-no { background: rgba(201,123,92,0.12); color: var(--clay); }
+    .tbl-actions { display: flex; gap: 6px; align-items: center; }
+    .btn-xs { padding: 4px 10px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 10px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1.5px solid rgba(61,46,38,0.15); background: none; color: var(--stone); white-space: nowrap; }
+    .btn-xs:hover { border-color: var(--palm); color: var(--palm); }
+    .btn-xs.pri { background: var(--palm); color: var(--white); border-color: var(--palm); }
+    .expand-arrow { background: none; border: none; cursor: pointer; color: var(--stone); font-size: 12px; padding: 2px; }
 
-    .site-card-photo { height: 150px; background: var(--offwhite); overflow: hidden; cursor: pointer; }
-    .site-card-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .photo-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; color: var(--stone); font-size: 11px; }
+    /* EXPANDED */
+    .tbl-expanded { border-top: 1px solid rgba(61,46,38,0.07); background: #faf8f5; padding: 16px; }
+    .exp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .exp-label { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stone); margin-bottom: 8px; }
+    .exp-img { width: 100%; height: 220px; background: var(--offwhite); border-radius: 10px; overflow: hidden; border: 1.5px solid rgba(61,46,38,0.1); }
+    .exp-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .img-ph { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px; color: var(--stone); font-size: 12px; }
+    .exp-desc { font-family: 'Merriweather', serif; font-size: 12px; line-height: 1.7; color: var(--stone); background: var(--white); border: 1.5px solid rgba(61,46,38,0.1); border-radius: 8px; padding: 12px; min-height: 100px; }
+    .exp-actions { margin-top: 10px; display: flex; gap: 8px; }
 
-    .photo-strip { display: flex; gap: 4px; padding: 6px 8px; overflow-x: auto; background: var(--offwhite); border-top: 1px solid rgba(61,46,38,0.08); }
-    .photo-thumb { width: 72px; height: 54px; flex-shrink: 0; border-radius: 6px; overflow: hidden; cursor: pointer; border: 2px solid transparent; position: relative; transition: border-color 0.15s; }
-    .photo-thumb.selected { border-color: var(--palm); }
-    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .photo-check { position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--palm); display: none; align-items: center; justify-content: center; }
-    .photo-thumb.selected .photo-check { display: flex; }
+    /* MODAL */
+    .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+    .modal-bg.open { display: flex; }
+    .modal { background: var(--white); border-radius: 16px; width: 100%; max-width: 740px; max-height: 90vh; overflow-y: auto; }
+    .modal-hd { padding: 16px 20px; border-bottom: 1px solid rgba(61,46,38,0.1); display: flex; align-items: center; justify-content: space-between; }
+    .modal-hd-title { font-size: 15px; font-weight: 700; }
+    .modal-x { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--stone); }
+    .modal-body { padding: 20px; }
+    .modal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .modal-item { position: relative; border-radius: 10px; overflow: hidden; cursor: pointer; aspect-ratio: 4/3; border: 3px solid transparent; transition: all 0.15s; }
+    .modal-item:hover { border-color: rgba(111,139,109,0.4); }
+    .modal-item.sel { border-color: var(--palm); }
+    .modal-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .modal-check { position: absolute; top: 8px; right: 8px; width: 22px; height: 22px; border-radius: 50%; background: var(--palm); display: none; align-items: center; justify-content: center; }
+    .modal-item.sel .modal-check { display: flex; }
+    .modal-attrib { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.55); padding: 4px 8px; font-size: 9px; color: rgba(255,255,255,0.8); }
+    .modal-ft { padding: 14px 20px; border-top: 1px solid rgba(61,46,38,0.1); display: flex; justify-content: flex-end; gap: 10px; }
+    .modal-save { padding: 10px 24px; background: var(--palm); color: var(--white); font-family: 'Bricolage Grotesque', sans-serif; font-size: 12px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; }
+    .modal-cancel { padding: 10px 16px; background: none; color: var(--stone); font-family: 'Bricolage Grotesque', sans-serif; font-size: 12px; border: 1.5px solid rgba(61,46,38,0.15); border-radius: 10px; cursor: pointer; }
 
-    .site-card-actions { padding: 8px 10px; display: flex; gap: 8px; }
-    .btn-fetch { padding: 7px 12px; background: none; color: var(--stone); font-family: 'Bricolage Grotesque', sans-serif; font-size: 11px; font-weight: 600; border: 1.5px solid rgba(61,46,38,0.15); border-radius: 8px; cursor: pointer; }
-    .btn-save { flex: 1; padding: 7px; background: var(--palm); color: var(--white); font-family: 'Bricolage Grotesque', sans-serif; font-size: 11px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; }
-    .btn-save:disabled { background: var(--stone); cursor: not-allowed; }
-
-    .site-desc { padding: 0 12px 10px; font-family: 'Merriweather', serif; font-size: 11px; line-height: 1.6; color: var(--stone); cursor: pointer; max-height: 60px; overflow: hidden; }
-    .site-desc.open { max-height: none; }
-
-    .loading { padding: 60px 24px; text-align: center; color: var(--stone); font-size: 13px; }
+    /* MISC */
+    .loading { padding: 60px; text-align: center; color: var(--stone); font-size: 13px; }
     .spinner { width: 28px; height: 28px; border: 2px solid rgba(111,139,109,0.2); border-top-color: var(--palm); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--brown); color: var(--white); padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 600; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; z-index: 999; }
+    .empty { padding: 40px; text-align: center; color: var(--stone); font-size: 13px; }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--brown); color: var(--white); padding: 10px 18px; border-radius: 10px; font-size: 12px; font-weight: 600; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; }
     .toast.show { opacity: 1; }
+    .progress-bar { height: 4px; background: rgba(61,46,38,0.08); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+    .progress-fill { height: 100%; background: var(--palm); border-radius: 2px; transition: width 0.3s; }
   </style>
 </head>
 <body>
@@ -91,183 +143,309 @@
 </div>
 
 <div id="app">
-  <div class="top-bar">
-    <div>
-      <div class="top-bar-title">Battuta Huna Admin</div>
-      <div class="top-bar-sub" id="topSub">Loading...</div>
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sb-header">
+        <svg width="28" height="28" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="24" fill="#6f8b6d"/><circle cx="24" cy="18" r="6" stroke="#f5f0e8" stroke-width="2" fill="none"/><path d="M24 24 Q16 30 16 38 Q24 34 32 38 Q32 30 24 24Z" fill="#f5f0e8"/></svg>
+        <div><div class="sb-title">Battuta Huna</div><div class="sb-env">Admin</div></div>
+      </div>
+      <div class="sb-nav">
+        <div class="sb-section">Content Management</div>
+        <div class="sb-item active" id="nav-overview" onclick="showDashboard()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Overview
+        </div>
+        <div class="sb-item" id="nav-images" onclick="toggleImageNav(this)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Site Image Management
+          <span class="sb-chevron" id="imgChev">▶</span>
+        </div>
+        <div class="sb-sub" id="cityTree"></div>
+      </div>
+      <div class="sb-footer">
+        <button class="sb-logout" onclick="doLogout()">Sign out</button>
+      </div>
     </div>
-    <button class="logout-btn" onclick="doLogout()">Sign out</button>
+
+    <div class="main">
+      <div class="main-bar">
+        <div>
+          <div class="main-title" id="mainTitle">Overview</div>
+          <div class="main-meta" id="mainMeta"></div>
+        </div>
+      </div>
+      <div class="main-body" id="mainBody">
+        <div class="loading"><div class="spinner"></div>Loading...</div>
+      </div>
+    </div>
   </div>
+</div>
 
-  <div class="stats-bar" id="statsBar"><div class="stat-pill">Loading...</div></div>
-
-  <div class="filters">
-    <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
-    <button class="filter-btn" onclick="setFilter('no_image',this)">Missing image</button>
-    <button class="filter-btn" onclick="setFilter('no_desc',this)">Missing description</button>
-    <button class="filter-btn" onclick="setFilter('incomplete',this)">Incomplete</button>
-    <button class="filter-btn" onclick="setFilter('complete',this)">Complete</button>
+<div class="modal-bg" id="photoModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <div class="modal-hd-title" id="modalTitle">Select photo</div>
+      <button class="modal-x" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-ft">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-save" onclick="saveModalPhoto()">Save selected photo</button>
+    </div>
   </div>
-
-  <div class="sites-grid" id="sitesGrid"><div class="loading"><div class="spinner"></div>Loading...</div></div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-const ADMIN_PW = 'battuta2026';
-let allSites = [], currentFilter = 'all';
-const fetchedPhotos = {}, selectedPhotos = {};
+const PW = 'battuta2026';
+let sites = [], curFilter = 'all', curCity = null;
+const photos = {}, selPhotos = {}, expanded = new Set();
+let mSiteId, mName, mCityId;
 
 function doLogin() {
-  if (document.getElementById('pwInput').value === ADMIN_PW) {
-    sessionStorage.setItem('bh_admin','1');
+  if (document.getElementById('pwInput').value === PW) {
+    sessionStorage.setItem('bha','1');
     document.getElementById('login').style.display = 'none';
     document.getElementById('app').style.display = 'block';
-    loadSites();
-  } else {
-    document.getElementById('loginError').textContent = 'Incorrect password.';
-  }
+    init();
+  } else document.getElementById('loginError').textContent = 'Incorrect password.';
 }
-
-function doLogout() { sessionStorage.removeItem('bh_admin'); location.reload(); }
-
-if (sessionStorage.getItem('bh_admin')) {
+function doLogout() { sessionStorage.removeItem('bha'); location.reload(); }
+if (sessionStorage.getItem('bha')) {
   document.getElementById('login').style.display = 'none';
   document.getElementById('app').style.display = 'block';
 }
 
-async function adminDb(action, data={}) {
-  const res = await fetch('/.netlify/functions/admin-db', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({action, data})
-  });
-  return res.json();
+async function db(action, data={}) {
+  const r = await fetch('/.netlify/functions/admin-db', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action,data}) });
+  return r.json();
 }
 
-async function loadSites() {
-  document.getElementById('sitesGrid').innerHTML = '<div class="loading"><div class="spinner"></div>Loading sites...</div>';
-  const data = await adminDb('getSites');
-  allSites = Array.isArray(data) ? data : [];
-  updateStats();
-  renderSites();
+async function init() {
+  const data = await db('getSites');
+  sites = Array.isArray(data) ? data : [];
+  buildCityTree();
+  showDashboard();
 }
 
-function updateStats() {
-  const t = allSites.length;
-  const img = allSites.filter(s=>s.image_url).length;
-  const desc = allSites.filter(s=>s.long_description).length;
-  const done = allSites.filter(s=>s.image_url&&s.long_description).length;
-  document.getElementById('statsBar').innerHTML = `
-    <div class="stat-pill"><strong>${t}</strong> sites</div>
-    <div class="stat-pill"><strong>${img}</strong> with image</div>
-    <div class="stat-pill"><strong>${desc}</strong> with description</div>
-    <div class="stat-pill"><strong>${done}</strong> complete</div>
-    <div class="stat-pill"><strong>${t-done}</strong> need attention</div>`;
-  document.getElementById('topSub').textContent = `${done}/${t} complete`;
+function buildCityTree() {
+  const cities = {};
+  sites.forEach(s => { if (!cities[s.city_id]) cities[s.city_id] = []; cities[s.city_id].push(s); });
+  const sorted = Object.keys(cities).sort();
+  document.getElementById('cityTree').innerHTML = sorted.map(c => {
+    const total = cities[c].length;
+    const done = cities[c].filter(s=>s.image_url&&s.long_description).length;
+    const pct = Math.round(done/total*100);
+    return `<div class="sb-city ${curCity===c?'active':''}" onclick="filterCity('${c}')">
+      <span>${cap(c)}</span>
+      <span class="sb-city-count">${done}/${total}</span>
+    </div>`;
+  }).join('');
 }
 
-function setFilter(f, btn) {
-  currentFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderSites();
+function cap(s) { return s.charAt(0).toUpperCase()+s.slice(1); }
+
+function toggleImageNav(el) {
+  const tree = document.getElementById('cityTree');
+  const chev = document.getElementById('imgChev');
+  const open = tree.classList.contains('open');
+  tree.classList.toggle('open', !open);
+  chev.classList.toggle('open', !open);
+  setActiveNav('nav-images');
+  if (!open && !curCity) { curCity = null; showImages(); }
 }
 
-function getFiltered() {
-  if (currentFilter==='no_image') return allSites.filter(s=>!s.image_url);
-  if (currentFilter==='no_desc') return allSites.filter(s=>!s.long_description);
-  if (currentFilter==='incomplete') return allSites.filter(s=>!s.image_url||!s.long_description);
-  if (currentFilter==='complete') return allSites.filter(s=>s.image_url&&s.long_description);
-  return allSites;
+function filterCity(city) {
+  curCity = city;
+  buildCityTree();
+  setActiveNav('nav-images');
+  document.getElementById('cityTree').classList.add('open');
+  document.getElementById('imgChev').classList.add('open');
+  showImages();
 }
 
-function renderSites() {
-  const sites = getFiltered();
-  const grid = document.getElementById('sitesGrid');
-  if (!sites.length) { grid.innerHTML = '<div class="loading">No sites match this filter.</div>'; return; }
-  grid.innerHTML = sites.map(s => `
-    <div class="site-card" id="card-${CSS.escape(s.id)}">
-      <div class="site-card-header">
-        <div class="site-card-city">${s.city_id}</div>
-        <div class="site-card-name">${s.name}</div>
-        <div class="site-card-badges">
-          <span class="badge ${s.image_url?'badge-ok':'badge-missing'}">${s.image_url?'✓ Image':'✗ No image'}</span>
-          <span class="badge ${s.long_description?'badge-ok':'badge-missing'}">${s.long_description?'✓ Description':'✗ No description'}</span>
+function setActiveNav(id) {
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+}
+
+// DASHBOARD
+function showDashboard() {
+  curCity = null;
+  setActiveNav('nav-overview');
+  document.getElementById('mainTitle').textContent = 'Overview';
+  const total = sites.length;
+  const img = sites.filter(s=>s.image_url).length;
+  const desc = sites.filter(s=>s.long_description).length;
+  const done = sites.filter(s=>s.image_url&&s.long_description).length;
+  const cities = [...new Set(sites.map(s=>s.city_id))];
+  document.getElementById('mainMeta').textContent = `${total} sites · ${cities.length} cities`;
+
+  document.getElementById('mainBody').innerHTML = `
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Total sites</div></div>
+      <div class="stat-card"><div class="stat-num">${cities.length}</div><div class="stat-label">Cities</div></div>
+      <div class="stat-card hi"><div class="stat-num">${done}</div><div class="stat-label">Complete</div></div>
+      <div class="stat-card"><div class="stat-num">${total-img}</div><div class="stat-label">Missing image</div></div>
+      <div class="stat-card"><div class="stat-num">${total-desc}</div><div class="stat-label">Missing description</div></div>
+    </div>
+    <div class="tbl">
+      ${cities.sort().map(city => {
+        const cs = sites.filter(s=>s.city_id===city);
+        const d = cs.filter(s=>s.image_url&&s.long_description).length;
+        const pct = Math.round(d/cs.length*100);
+        return `<div style="padding:12px 18px;border-bottom:1px solid rgba(61,46,38,0.06);display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="filterCity('${city}')">
+          <div style="font-size:13px;font-weight:600;flex:1;">${cap(city)}</div>
+          <div style="font-size:11px;color:var(--stone);">${cs.length} sites</div>
+          <div style="width:120px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+              <span style="font-size:10px;color:var(--stone);">${d}/${cs.length}</span>
+              <span style="font-size:10px;color:var(--stone);">${pct}%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// IMAGE MANAGEMENT
+function showImages() {
+  let filtered = curCity ? sites.filter(s=>s.city_id===curCity) : sites;
+  if (curFilter==='no_image') filtered = filtered.filter(s=>!s.image_url);
+  else if (curFilter==='no_desc') filtered = filtered.filter(s=>!s.long_description);
+  else if (curFilter==='incomplete') filtered = filtered.filter(s=>!s.image_url||!s.long_description);
+  else if (curFilter==='complete') filtered = filtered.filter(s=>s.image_url&&s.long_description);
+
+  const done = filtered.filter(s=>s.image_url&&s.long_description).length;
+  document.getElementById('mainTitle').textContent = curCity ? cap(curCity) : 'All Sites';
+  document.getElementById('mainMeta').textContent = `${done}/${filtered.length} complete`;
+
+  document.getElementById('mainBody').innerHTML = `
+    <div class="filter-row">
+      ${['all','no_image','no_desc','incomplete','complete'].map(f =>
+        `<button class="fb ${curFilter===f?'active':''}" onclick="setF('${f}',this)">${{all:'All',no_image:'Missing image',no_desc:'Missing description',incomplete:'Incomplete',complete:'Complete'}[f]}</button>`
+      ).join('')}
+    </div>
+    ${!filtered.length ? '<div class="empty">No sites match this filter.</div>' : `
+    <div class="tbl">
+      <div class="tbl-head">
+        <span>Site</span><span>City</span><span>Image</span><span>Desc</span><span>Actions</span>
+      </div>
+      ${filtered.map(s => siteRow(s)).join('')}
+    </div>`}`;
+}
+
+function siteRow(s) {
+  const exp = expanded.has(s.id);
+  return `<div class="tbl-row" id="r-${s.id}">
+    <div class="tbl-main" onclick="toggleExp('${s.id}')">
+      <div class="tbl-name">${s.name}</div>
+      <div class="tbl-city">${s.city_id}</div>
+      <div><span class="badge ${s.image_url?'badge-ok':'badge-no'}">${s.image_url?'✓':'✗'}</span></div>
+      <div><span class="badge ${s.long_description?'badge-ok':'badge-no'}">${s.long_description?'✓':'✗'}</span></div>
+      <div class="tbl-actions" onclick="event.stopPropagation()">
+        <button class="btn-xs" onclick="openModal('${s.id}','${s.name.replace(/'/g,"\\'")}','${s.city_id}')">Browse photos</button>
+        <button class="expand-arrow">${exp?'▲':'▼'}</button>
+      </div>
+    </div>
+    ${exp ? expRow(s) : ''}
+  </div>`;
+}
+
+function expRow(s) {
+  return `<div class="tbl-expanded">
+    <div class="exp-grid">
+      <div>
+        <div class="exp-label">Current image</div>
+        <div class="exp-img">
+          ${s.image_url ? `<img src="${s.image_url}" onerror="this.style.display='none'"/>` : `<div class="img-ph"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9b8f82" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>No image</div>`}
+        </div>
+        <div class="exp-actions">
+          <button class="btn-xs pri" onclick="openModal('${s.id}','${s.name.replace(/'/g,"\\'")}','${s.city_id}')">Browse & select photos →</button>
         </div>
       </div>
-      <div class="site-card-photo" id="photo-${s.id}">
-        ${s.image_url
-          ? `<img src="${s.image_url}" onerror="this.style.display='none'"/>`
-          : `<div class="photo-placeholder"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9b8f82" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>No image</div>`}
+      <div>
+        <div class="exp-label">Description</div>
+        <div class="exp-desc">${s.long_description || '<em style="color:#9b8f82;">No description yet. Open the site in the app to generate one.</em>'}</div>
       </div>
-      <div class="photo-strip" id="strip-${s.id}" style="display:none;"></div>
-      <div class="site-card-actions">
-        <button class="btn-fetch" onclick="fetchPhotos('${s.id}','${s.name.replace(/'/g,"\\'")}','${s.city_id}')">Fetch photos</button>
-        <button class="btn-save" id="save-${s.id}" onclick="savePhoto('${s.id}','${s.name.replace(/'/g,"\\'")}','${s.city_id}')" disabled>Save selected</button>
-      </div>
-      ${s.long_description ? `<div class="site-desc" onclick="this.classList.toggle('open')">${s.long_description}</div>` : ''}
-    </div>`).join('');
+    </div>
+  </div>`;
 }
 
-async function fetchPhotos(siteId, name, cityId) {
-  const strip = document.getElementById('strip-'+siteId);
-  strip.style.display = 'flex';
-  strip.innerHTML = '<div style="padding:8px;font-size:11px;color:#9b8f82;">Fetching...</div>';
-  try {
-    const res = await fetch(`/.netlify/functions/wiki-image?search=${encodeURIComponent(name+' '+cityId)}`);
-    const data = await res.json();
-    const images = data.images || [];
-    if (!images.length) { strip.innerHTML = '<div style="padding:8px;font-size:11px;color:#c97b5c;">No photos found.</div>'; return; }
-    fetchedPhotos[siteId] = images;
-    selectedPhotos[siteId] = new Set([0]);
-    renderStrip(siteId);
-    document.getElementById('save-'+siteId).disabled = false;
-  } catch(e) {
-    strip.innerHTML = `<div style="padding:8px;font-size:11px;color:#c97b5c;">${e.message}</div>`;
+function toggleExp(id) {
+  expanded.has(id) ? expanded.delete(id) : expanded.add(id);
+  const s = sites.find(x=>x.id===id);
+  if (s) { const el = document.getElementById('r-'+id); if (el) el.outerHTML = siteRow(s); }
+}
+
+function setF(f, btn) {
+  curFilter = f;
+  showImages();
+}
+
+// MODAL
+async function openModal(siteId, name, cityId) {
+  mSiteId=siteId; mName=name; mCityId=cityId;
+  document.getElementById('modalTitle').textContent = name;
+  document.getElementById('modalBody').innerHTML = '<div class="loading"><div class="spinner"></div>Fetching photos...</div>';
+  document.getElementById('photoModal').classList.add('open');
+
+  if (!photos[siteId]) {
+    try {
+      const r = await fetch(`/.netlify/functions/wiki-image?search=${encodeURIComponent(name+' '+cityId)}`);
+      const d = await r.json();
+      photos[siteId] = d.images||[];
+      selPhotos[siteId] = new Set([0]);
+    } catch(e) {
+      document.getElementById('modalBody').innerHTML = '<div class="empty">Failed to load photos.</div>';
+      return;
+    }
   }
+  renderModal();
 }
 
-function renderStrip(siteId) {
-  const strip = document.getElementById('strip-'+siteId);
-  const images = fetchedPhotos[siteId]||[];
-  const sel = selectedPhotos[siteId]||new Set();
-  strip.innerHTML = images.map((img,i)=>`
-    <div class="photo-thumb ${sel.has(i)?'selected':''}" onclick="togglePhoto('${siteId}',${i})" title="${img.attribution||''}">
-      <img src="${img.url}" onerror="this.parentElement.style.display='none'"/>
-      <div class="photo-check"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
-    </div>`).join('');
+function renderModal() {
+  const imgs = photos[mSiteId]||[];
+  const sel = selPhotos[mSiteId]||new Set();
+  if (!imgs.length) { document.getElementById('modalBody').innerHTML='<div class="empty">No photos found.</div>'; return; }
+  document.getElementById('modalBody').innerHTML = `<div class="modal-grid">${imgs.map((img,i)=>`
+    <div class="modal-item ${sel.has(i)?'sel':''}" onclick="pickPhoto(${i})">
+      <img src="${img.url}" onerror="this.parentElement.style.opacity='0.3'"/>
+      <div class="modal-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+      ${img.attribution?`<div class="modal-attrib">${img.attribution}</div>`:''}
+    </div>`).join('')}</div>`;
 }
 
-function togglePhoto(siteId, i) {
-  if (!selectedPhotos[siteId]) selectedPhotos[siteId] = new Set();
-  const sel = selectedPhotos[siteId];
-  sel.has(i) ? sel.delete(i) : sel.add(i);
-  renderStrip(siteId);
-  document.getElementById('save-'+siteId).disabled = sel.size===0;
+function pickPhoto(i) {
+  if (!selPhotos[mSiteId]) selPhotos[mSiteId]=new Set();
+  selPhotos[mSiteId].clear(); selPhotos[mSiteId].add(i);
+  renderModal();
 }
 
-async function savePhoto(siteId, name, cityId) {
-  const images = fetchedPhotos[siteId]||[];
-  const sel = [...(selectedPhotos[siteId]||new Set())];
-  if (!sel.length||!images.length) return;
-  const imageUrl = images[sel[0]].raw;
-  await adminDb('saveImageUrl', {name, cityId, imageUrl});
-  const site = allSites.find(s=>s.id===siteId);
-  if (site) site.image_url = imageUrl;
-  const photoEl = document.getElementById('photo-'+siteId);
-  if (photoEl) photoEl.innerHTML = `<img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover;display:block;"/>`;
-  updateStats();
-  showToast('✓ Image saved for '+name);
+async function saveModalPhoto() {
+  const imgs = photos[mSiteId]||[];
+  const sel = [...(selPhotos[mSiteId]||new Set())];
+  if (!sel.length||!imgs.length) return;
+  await db('saveImageUrl',{name:mName,cityId:mCityId,imageUrl:imgs[sel[0]].raw});
+  const s = sites.find(x=>x.id===mSiteId);
+  if (s) s.image_url = imgs[sel[0]].raw;
+  closeModal();
+  buildCityTree();
+  showImages();
+  showToast('✓ Image saved for '+mName);
 }
+
+function closeModal() { document.getElementById('photoModal').classList.remove('open'); }
 
 function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 3000);
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
 }
 
-if (sessionStorage.getItem('bh_admin')) loadSites();
+if (sessionStorage.getItem('bha')) init();
 </script>
 </body>
 </html>
