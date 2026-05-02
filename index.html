@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Battuta Huna — Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --palm: #6f8b6d; --clay: #c97b5c; --brown: #3d2e26;
+      --stone: #9b8f82; --offwhite: #f5f0e8; --white: #ffffff;
+    }
+    body { font-family: 'Bricolage Grotesque', sans-serif; background: var(--offwhite); color: var(--brown); min-height: 100vh; }
+
+    /* LOGIN */
+    #login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .login-card { background: var(--white); border: 2px solid rgba(111,139,109,0.3); border-radius: 20px; padding: 40px; width: 100%; max-width: 360px; text-align: center; }
+    .login-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; margin-top: 16px; }
+    .login-sub { font-family: 'Merriweather', serif; font-style: italic; font-size: 12px; color: var(--stone); margin-bottom: 28px; }
+    .login-input { width: 100%; padding: 12px 16px; border: 1.5px solid rgba(61,46,38,0.15); border-radius: 10px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 14px; color: var(--brown); background: var(--offwhite); outline: none; margin-bottom: 12px; letter-spacing: 0.1em; }
+    .login-input:focus { border-color: var(--palm); }
+    .login-btn { width: 100%; padding: 13px; background: var(--palm); color: var(--white); font-family: 'Bricolage Grotesque', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; border: none; border-radius: 10px; cursor: pointer; }
+    .login-error { color: var(--clay); font-size: 12px; margin-top: 8px; }
+
+    /* APP */
+    #app { display: none; }
+    .top-bar { background: var(--white); border-bottom: 1px solid rgba(61,46,38,0.1); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; position: sticky; top: 0; z-index: 10; }
+    .top-bar-title { font-size: 15px; font-weight: 700; }
+    .top-bar-sub { font-size: 11px; color: var(--stone); }
+    .logout-btn { font-size: 11px; color: var(--stone); background: none; border: 1px solid rgba(61,46,38,0.15); border-radius: 6px; padding: 5px 12px; cursor: pointer; }
+
+    .stats-bar { display: flex; gap: 12px; padding: 14px 24px; border-bottom: 1px solid rgba(61,46,38,0.08); background: var(--white); overflow-x: auto; flex-wrap: wrap; }
+    .stat-pill { background: var(--offwhite); border-radius: 20px; padding: 5px 14px; font-size: 12px; color: var(--stone); white-space: nowrap; }
+    .stat-pill strong { color: var(--brown); font-weight: 700; }
+
+    .filters { display: flex; gap: 8px; padding: 16px 24px 0; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 14px; border-radius: 20px; border: 1.5px solid rgba(61,46,38,0.15); background: var(--white); font-family: 'Bricolage Grotesque', sans-serif; font-size: 12px; cursor: pointer; color: var(--stone); transition: all 0.15s; }
+    .filter-btn.active { background: var(--palm); color: var(--white); border-color: var(--palm); }
+
+    .sites-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 16px 24px 40px; }
+
+    .site-card { background: var(--white); border: 1.5px solid rgba(61,46,38,0.1); border-radius: 14px; overflow: hidden; }
+    .site-card:hover { border-color: var(--palm); }
+    .site-card-header { padding: 12px 14px 10px; border-bottom: 1px solid rgba(61,46,38,0.06); }
+    .site-card-city { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); margin-bottom: 2px; }
+    .site-card-name { font-size: 14px; font-weight: 700; }
+    .site-card-badges { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+    .badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+    .badge-ok { background: rgba(111,139,109,0.12); color: var(--palm); }
+    .badge-missing { background: rgba(201,123,92,0.12); color: var(--clay); }
+
+    .site-card-photo { height: 150px; background: var(--offwhite); overflow: hidden; cursor: pointer; }
+    .site-card-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .photo-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; color: var(--stone); font-size: 11px; }
+
+    .photo-strip { display: flex; gap: 4px; padding: 6px 8px; overflow-x: auto; background: var(--offwhite); border-top: 1px solid rgba(61,46,38,0.08); }
+    .photo-thumb { width: 72px; height: 54px; flex-shrink: 0; border-radius: 6px; overflow: hidden; cursor: pointer; border: 2px solid transparent; position: relative; transition: border-color 0.15s; }
+    .photo-thumb.selected { border-color: var(--palm); }
+    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .photo-check { position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--palm); display: none; align-items: center; justify-content: center; }
+    .photo-thumb.selected .photo-check { display: flex; }
+
+    .site-card-actions { padding: 8px 10px; display: flex; gap: 8px; }
+    .btn-fetch { padding: 7px 12px; background: none; color: var(--stone); font-family: 'Bricolage Grotesque', sans-serif; font-size: 11px; font-weight: 600; border: 1.5px solid rgba(61,46,38,0.15); border-radius: 8px; cursor: pointer; }
+    .btn-save { flex: 1; padding: 7px; background: var(--palm); color: var(--white); font-family: 'Bricolage Grotesque', sans-serif; font-size: 11px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-save:disabled { background: var(--stone); cursor: not-allowed; }
+
+    .site-desc { padding: 0 12px 10px; font-family: 'Merriweather', serif; font-size: 11px; line-height: 1.6; color: var(--stone); cursor: pointer; max-height: 60px; overflow: hidden; }
+    .site-desc.open { max-height: none; }
+
+    .loading { padding: 60px 24px; text-align: center; color: var(--stone); font-size: 13px; }
+    .spinner { width: 28px; height: 28px; border: 2px solid rgba(111,139,109,0.2); border-top-color: var(--palm); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--brown); color: var(--white); padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 600; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; z-index: 999; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<div id="login">
+  <div class="login-card">
+    <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="24" fill="#6f8b6d"/><circle cx="24" cy="18" r="6" stroke="#f5f0e8" stroke-width="2" fill="none"/><path d="M24 24 Q16 30 16 38 Q24 34 32 38 Q32 30 24 24Z" fill="#f5f0e8"/></svg>
+    <div class="login-title">Battuta Huna</div>
+    <div class="login-sub">Admin Dashboard</div>
+    <input type="password" class="login-input" id="pwInput" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">SIGN IN</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="top-bar">
+    <div>
+      <div class="top-bar-title">Battuta Huna Admin</div>
+      <div class="top-bar-sub" id="topSub">Loading...</div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Sign out</button>
+  </div>
+
+  <div class="stats-bar" id="statsBar"><div class="stat-pill">Loading...</div></div>
+
+  <div class="filters">
+    <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+    <button class="filter-btn" onclick="setFilter('no_image',this)">Missing image</button>
+    <button class="filter-btn" onclick="setFilter('no_desc',this)">Missing description</button>
+    <button class="filter-btn" onclick="setFilter('incomplete',this)">Incomplete</button>
+    <button class="filter-btn" onclick="setFilter('complete',this)">Complete</button>
+  </div>
+
+  <div class="sites-grid" id="sitesGrid"><div class="loading"><div class="spinner"></div>Loading...</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ADMIN_PW = 'battuta2026';
+let allSites = [], currentFilter = 'all';
+const fetchedPhotos = {}, selectedPhotos = {};
+
+function doLogin() {
+  if (document.getElementById('pwInput').value === ADMIN_PW) {
+    sessionStorage.setItem('bh_admin','1');
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadSites();
+  } else {
+    document.getElementById('loginError').textContent = 'Incorrect password.';
+  }
+}
+
+function doLogout() { sessionStorage.removeItem('bh_admin'); location.reload(); }
+
+if (sessionStorage.getItem('bh_admin')) {
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+async function adminDb(action, data={}) {
+  const res = await fetch('/.netlify/functions/admin-db', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({action, data})
+  });
+  return res.json();
+}
+
+async function loadSites() {
+  document.getElementById('sitesGrid').innerHTML = '<div class="loading"><div class="spinner"></div>Loading sites...</div>';
+  const data = await adminDb('getSites');
+  allSites = Array.isArray(data) ? data : [];
+  updateStats();
+  renderSites();
+}
+
+function updateStats() {
+  const t = allSites.length;
+  const img = allSites.filter(s=>s.image_url).length;
+  const desc = allSites.filter(s=>s.long_description).length;
+  const done = allSites.filter(s=>s.image_url&&s.long_description).length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-pill"><strong>${t}</strong> sites</div>
+    <div class="stat-pill"><strong>${img}</strong> with image</div>
+    <div class="stat-pill"><strong>${desc}</strong> with description</div>
+    <div class="stat-pill"><strong>${done}</strong> complete</div>
+    <div class="stat-pill"><strong>${t-done}</strong> need attention</div>`;
+  document.getElementById('topSub').textContent = `${done}/${t} complete`;
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSites();
+}
+
+function getFiltered() {
+  if (currentFilter==='no_image') return allSites.filter(s=>!s.image_url);
+  if (currentFilter==='no_desc') return allSites.filter(s=>!s.long_description);
+  if (currentFilter==='incomplete') return allSites.filter(s=>!s.image_url||!s.long_description);
+  if (currentFilter==='complete') return allSites.filter(s=>s.image_url&&s.long_description);
+  return allSites;
+}
+
+function renderSites() {
+  const sites = getFiltered();
+  const grid = document.getElementById('sitesGrid');
+  if (!sites.length) { grid.innerHTML = '<div class="loading">No sites match this filter.</div>'; return; }
+  grid.innerHTML = sites.map(s => `
+    <div class="site-card" id="card-${CSS.escape(s.id)}">
+      <div class="site-card-header">
+        <div class="site-card-city">${s.city_id}</div>
+        <div class="site-card-name">${s.name}</div>
+        <div class="site-card-badges">
+          <span class="badge ${s.image_url?'badge-ok':'badge-missing'}">${s.image_url?'✓ Image':'✗ No image'}</span>
+          <span class="badge ${s.long_description?'badge-ok':'badge-missing'}">${s.long_description?'✓ Description':'✗ No description'}</span>
+        </div>
+      </div>
+      <div class="site-card-photo" id="photo-${s.id}">
+        ${s.image_url
+          ? `<img src="${s.image_url}" onerror="this.style.display='none'"/>`
+          : `<div class="photo-placeholder"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9b8f82" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>No image</div>`}
+      </div>
+      <div class="photo-strip" id="strip-${s.id}" style="display:none;"></div>
+      <div class="site-card-actions">
+        <button class="btn-fetch" onclick="fetchPhotos('${s.id}','${s.name.replace(/'/g,"\\'")}','${s.city_id}')">Fetch photos</button>
+        <button class="btn-save" id="save-${s.id}" onclick="savePhoto('${s.id}','${s.name.replace(/'/g,"\\'")}','${s.city_id}')" disabled>Save selected</button>
+      </div>
+      ${s.long_description ? `<div class="site-desc" onclick="this.classList.toggle('open')">${s.long_description}</div>` : ''}
+    </div>`).join('');
+}
+
+async function fetchPhotos(siteId, name, cityId) {
+  const strip = document.getElementById('strip-'+siteId);
+  strip.style.display = 'flex';
+  strip.innerHTML = '<div style="padding:8px;font-size:11px;color:#9b8f82;">Fetching...</div>';
+  try {
+    const res = await fetch(`/.netlify/functions/wiki-image?search=${encodeURIComponent(name+' '+cityId)}`);
+    const data = await res.json();
+    const images = data.images || [];
+    if (!images.length) { strip.innerHTML = '<div style="padding:8px;font-size:11px;color:#c97b5c;">No photos found.</div>'; return; }
+    fetchedPhotos[siteId] = images;
+    selectedPhotos[siteId] = new Set([0]);
+    renderStrip(siteId);
+    document.getElementById('save-'+siteId).disabled = false;
+  } catch(e) {
+    strip.innerHTML = `<div style="padding:8px;font-size:11px;color:#c97b5c;">${e.message}</div>`;
+  }
+}
+
+function renderStrip(siteId) {
+  const strip = document.getElementById('strip-'+siteId);
+  const images = fetchedPhotos[siteId]||[];
+  const sel = selectedPhotos[siteId]||new Set();
+  strip.innerHTML = images.map((img,i)=>`
+    <div class="photo-thumb ${sel.has(i)?'selected':''}" onclick="togglePhoto('${siteId}',${i})" title="${img.attribution||''}">
+      <img src="${img.url}" onerror="this.parentElement.style.display='none'"/>
+      <div class="photo-check"><svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+    </div>`).join('');
+}
+
+function togglePhoto(siteId, i) {
+  if (!selectedPhotos[siteId]) selectedPhotos[siteId] = new Set();
+  const sel = selectedPhotos[siteId];
+  sel.has(i) ? sel.delete(i) : sel.add(i);
+  renderStrip(siteId);
+  document.getElementById('save-'+siteId).disabled = sel.size===0;
+}
+
+async function savePhoto(siteId, name, cityId) {
+  const images = fetchedPhotos[siteId]||[];
+  const sel = [...(selectedPhotos[siteId]||new Set())];
+  if (!sel.length||!images.length) return;
+  const imageUrl = images[sel[0]].raw;
+  await adminDb('saveImageUrl', {name, cityId, imageUrl});
+  const site = allSites.find(s=>s.id===siteId);
+  if (site) site.image_url = imageUrl;
+  const photoEl = document.getElementById('photo-'+siteId);
+  if (photoEl) photoEl.innerHTML = `<img src="${imageUrl}" style="width:100%;height:100%;object-fit:cover;display:block;"/>`;
+  updateStats();
+  showToast('✓ Image saved for '+name);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+if (sessionStorage.getItem('bh_admin')) loadSites();
+</script>
+</body>
+</html>
