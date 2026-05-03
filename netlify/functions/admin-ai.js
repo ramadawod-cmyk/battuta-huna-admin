@@ -30,7 +30,7 @@ exports.handler = async function(event) {
         'anthropic-version': '2023-06-01',
         'Content-Length': Buffer.byteLength(payload)
       },
-      timeout: 28000
+      timeout: 24000
     }, res => {
       let data = '';
       res.on('data', chunk => data += chunk);
