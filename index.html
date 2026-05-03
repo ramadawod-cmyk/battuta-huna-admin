@@ -505,26 +505,32 @@ let poiCityName = '';
 
 function showPoiGenerator() {
   setActiveNav('nav-poi');
-  document.getElementById('mainTitle').textContent = 'POI Generator';
-  document.getElementById('mainMeta').textContent = 'Generate and seed cultural POIs for any city';
+  document.getElementById('mainTitle').textContent = 'POI Importer';
+  document.getElementById('mainMeta').textContent = 'Import and seed cultural POIs for any city';
   document.getElementById('mainBody').innerHTML = `
     <div class="poi-gen-wrap">
       <div class="poi-step">
-        <div class="poi-step-title"><div class="poi-step-num">1</div> Generate POIs</div>
-        <div class="poi-input-row">
-          <input class="poi-city-input" id="poiCityInput" placeholder="Enter city name (e.g. Lisbon, Kyoto, Cairo)" onkeydown="if(event.key==='Enter')generatePois()"/>
-          <select id="poiCountSelect" style="padding:10px 12px;border:1.5px solid rgba(61,46,38,0.15);border-radius:10px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;color:var(--brown);background:var(--offwhite);outline:none;">
-            <option value="20">20 POIs</option>
-            <option value="40">40 POIs</option>
-            <option value="60">60 POIs</option>
-            <option value="80" selected>80 POIs</option>
-          </select>
-          <button class="poi-gen-btn" id="poiGenBtn" onclick="generatePois()">Generate POIs</button>
+        <div class="poi-step-title"><div class="poi-step-num">1</div> Prepare your JSON</div>
+        <p style="font-size:13px;color:var(--stone);line-height:1.7;margin-bottom:12px;">Generate POI data using Claude or another tool, then paste the JSON array below. Each item should have: <code style="background:var(--offwhite);padding:2px 6px;border-radius:4px;font-size:11px;">name, category, description, neighborhood, visit_duration_minutes, best_time, hidden_gem, lat, lng</code></p>
+        <div style="background:var(--offwhite);border:1.5px solid rgba(61,46,38,0.1);border-radius:10px;padding:14px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:600;color:var(--stone);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">Suggested Claude prompt</div>
+          <div style="font-family:monospace;font-size:11px;color:var(--brown);line-height:1.6;white-space:pre-wrap;">Generate 20 cultural POIs for [CITY]. Return a JSON array only, no other text. Each object: name (string), category (historical|religious|museum|art|market|architecture|nature|neighbourhood), description (1 sentence), neighborhood (string), visit_duration_minutes (number), best_time (morning|afternoon|evening|any), hidden_gem (boolean), lat (number), lng (number).</div>
         </div>
-        <div id="poiGenStatus" style="margin-top:10px;font-size:12px;color:var(--stone);"></div>
+      </div>
+      <div class="poi-step">
+        <div class="poi-step-title"><div class="poi-step-num">2</div> City & JSON</div>
+        <div class="poi-input-row" style="margin-bottom:12px;">
+          <input class="poi-city-input" id="poiCityInput" placeholder="City name (e.g. Lisbon, Kyoto, Cairo)"/>
+        </div>
+        <textarea id="poiJsonInput" style="width:100%;height:200px;padding:12px;border:1.5px solid rgba(61,46,38,0.15);border-radius:10px;font-family:monospace;font-size:12px;color:var(--brown);background:var(--offwhite);outline:none;resize:vertical;" placeholder='[{"name":"...", "category":"...", ...}]'></textarea>
+        <div style="margin-top:10px;display:flex;gap:10px;align-items:center;">
+          <button class="poi-gen-btn" onclick="importPois()">Import & Preview</button>
+          <label style="font-size:11px;color:var(--stone);cursor:pointer;">or upload JSON file: <input type="file" accept=".json" onchange="loadPoiFile(this)" style="font-size:11px;"/></label>
+        </div>
+        <div id="poiGenStatus" style="margin-top:8px;font-size:12px;color:var(--stone);"></div>
       </div>
       <div class="poi-step" id="poiReviewStep" style="display:none;">
-        <div class="poi-step-title"><div class="poi-step-num">2</div> Review & Edit</div>
+        <div class="poi-step-title"><div class="poi-step-num">3</div> Review & Push</div>
         <div class="poi-summary-bar" id="poiSummaryBar"></div>
         <div class="poi-actions">
           <button class="btn-xs" onclick="copyPoiJson()">Copy JSON</button>
@@ -536,54 +542,40 @@ function showPoiGenerator() {
     </div>`;
 }
 
-async function generatePois() {
+function importPois() {
   const city = document.getElementById('poiCityInput').value.trim();
-  if (!city) return;
-  poiCityName = city;
-  const totalCount = parseInt(document.getElementById('poiCountSelect').value) || 20;
-  const BATCH = 10; // max per API call to avoid timeout
-  const batches = Math.ceil(totalCount / BATCH);
-
-  const btn = document.getElementById('poiGenBtn');
+  const raw = document.getElementById('poiJsonInput').value.trim();
   const status = document.getElementById('poiGenStatus');
-  btn.disabled = true;
-  btn.textContent = 'Generating...';
-
-  const systemPrompt = `You are a cultural travel data specialist. Generate accurate, detailed POI data for cities around the world. Always return valid JSON only — no preamble, no markdown, no explanation. Every POI must be real and verifiable. Descriptions should be evocative and specific, never generic. Mix well-known landmarks with genuine hidden gems locals would recommend.`;
-
-  generatedPois = [];
-
+  if (!city) { status.textContent = '✗ Please enter a city name'; return; }
+  if (!raw) { status.textContent = '✗ Please paste JSON data'; return; }
   try {
-    for (let b = 0; b < batches; b++) {
-      const batchCount = Math.min(BATCH, totalCount - b * BATCH);
-      const existing = generatedPois.map(p => p.name).join(', ');
-      status.innerHTML = `<div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px;"></div>Batch ${b+1}/${batches} — fetching ${batchCount} POIs...`;
-
-      const userPrompt = `Generate exactly ${batchCount} cultural POIs for ${city}. Return a JSON array where each object has: name (string), category (one of: historical | religious | museum | art | market | architecture | nature | neighbourhood), description (2-3 sentences specific and evocative), neighborhood (string), visit_duration_minutes (number), best_time (one of: morning | afternoon | evening | any), hidden_gem (boolean), lat (number), lng (number).${existing ? ' Do NOT include these already generated: ' + existing + '.' : ''} Rules: some hidden_gem true, spread across neighborhoods, no duplicates, accurate coordinates.`;
-
-      const res = await fetch('/.netlify/functions/admin-ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ system: systemPrompt, user: userPrompt })
-      });
-      const data = await res.json();
-      const raw = data.text || '';
-      const match = raw.match(/\[[\s\S]*\]/);
-      if (!match) throw new Error('Batch ' + (b+1) + ' returned no JSON');
-      const batch = JSON.parse(match[0]);
-      generatedPois = generatedPois.concat(batch);
-      status.textContent = `✓ ${generatedPois.length}/${totalCount} POIs generated...`;
-    }
-
-    status.textContent = `✓ Generated ${generatedPois.length} POIs for ${city}`;
-    btn.textContent = 'Regenerate';
-    btn.disabled = false;
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('No JSON array found');
+    generatedPois = JSON.parse(match[0]);
+    poiCityName = city;
+    status.textContent = `✓ Loaded ${generatedPois.length} POIs for ${city}`;
     renderPoiReview();
   } catch(e) {
-    status.textContent = '✗ Error: ' + e.message;
-    btn.textContent = 'Generate POIs';
-    btn.disabled = false;
+    status.textContent = '✗ Invalid JSON: ' + e.message;
   }
+}
+
+function loadPoiFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('poiJsonInput').value = e.target.result;
+    // Auto-detect city from filename
+    const cityGuess = file.name.replace('-pois.json','').replace('.json','').replace(/-/g,' ');
+    const cityInput = document.getElementById('poiCityInput');
+    if (!cityInput.value) cityInput.value = cityGuess;
+  };
+  reader.readAsText(file);
+}
+
+function generatePois() {
+  // No-op
 }
 
 function renderPoiReview() {
