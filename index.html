@@ -4,7 +4,8 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Battuta Huna — Admin</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;1,300&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;1,300&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;1,300&display=swap" rel="stylesheet"/></noscript>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -153,10 +154,11 @@
     .gem-badge { display: inline-block; font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 8px; background: rgba(111,139,109,0.15); color: var(--palm); margin-bottom: 8px; }
     .poi-push-btn { padding: 10px 20px; background: var(--brown); color: var(--white); font-family: 'Bricolage Grotesque', sans-serif; font-size: 12px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; }
     .poi-loading { padding: 40px; text-align: center; color: var(--stone); }
+  </style>
 </head>
 <body>
 
-<div id="login">
+<div id="login" style="display:flex;">
   <div class="login-card">
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="24" fill="#6f8b6d"/><circle cx="24" cy="18" r="6" stroke="#f5f0e8" stroke-width="2" fill="none"/><path d="M24 24 Q16 30 16 38 Q24 34 32 38 Q32 30 24 24Z" fill="#f5f0e8"/></svg>
     <div class="login-title">Battuta Huna</div>
@@ -167,7 +169,7 @@
   </div>
 </div>
 
-<div id="app">
+<div id="app" style="display:none;">
   <div class="layout">
     <div class="sidebar">
       <div class="sb-header">
@@ -245,10 +247,6 @@ function doLogin() {
   } else document.getElementById('loginError').textContent = 'Incorrect password.';
 }
 function doLogout() { sessionStorage.removeItem('bha'); location.reload(); }
-if (sessionStorage.getItem('bha')) {
-  document.getElementById('login').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-}
 
 async function db(action, data={}) {
   const r = await fetch('/.netlify/functions/admin-db', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action,data}) });
@@ -758,7 +756,14 @@ async function runSync() {
   }
 }
 
-if (sessionStorage.getItem('bha')) init();
+if (sessionStorage.getItem('bha')) {
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  init();
+} else {
+  document.getElementById('login').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
 </script>
 </body>
 </html>
