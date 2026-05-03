@@ -48,6 +48,20 @@ exports.handler = async function(event) {
       return { statusCode: 200, headers, body: JSON.stringify(res.body) };
     }
 
+    // Upsert city
+    if (action === 'saveCity') {
+      const { id, name } = data;
+      const res = await request('POST', '/rest/v1/cities', { id, name, wiki: name }, 'resolution=merge-duplicates');
+      return { statusCode: 200, headers, body: JSON.stringify({ saved: true }) };
+    }
+
+    // Batch upsert sites
+    if (action === 'upsertSites') {
+      const { sites } = data;
+      const res = await request('POST', '/rest/v1/sites', sites, 'resolution=merge-duplicates');
+      return { statusCode: 200, headers, body: JSON.stringify({ count: sites.length }) };
+    }
+
     // Update image URL
     if (action === 'saveImageUrl') {
       const { name, cityId, imageUrl } = data;
