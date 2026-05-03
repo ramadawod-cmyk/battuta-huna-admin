@@ -72,16 +72,20 @@
 
     /* SITE TABLE */
     .tbl { background: var(--white); border: 1.5px solid rgba(61,46,38,0.1); border-radius: 14px; overflow: hidden; }
-    .tbl-head { display: grid; grid-template-columns: 2fr 1fr 70px 70px 140px; padding: 9px 16px; border-bottom: 1px solid rgba(61,46,38,0.08); background: var(--offwhite); }
+    .tbl-head { display: grid; grid-template-columns: 2fr 1fr 60px 60px 100px 140px; padding: 9px 16px; border-bottom: 1px solid rgba(61,46,38,0.08); background: var(--offwhite); }
     .tbl-head span { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--stone); }
     .tbl-row { border-bottom: 1px solid rgba(61,46,38,0.06); }
     .tbl-row:last-child { border-bottom: none; }
-    .tbl-main { display: grid; grid-template-columns: 2fr 1fr 70px 70px 140px; padding: 10px 16px; align-items: center; cursor: pointer; transition: background 0.1s; }
+    .tbl-main { display: grid; grid-template-columns: 2fr 1fr 60px 60px 100px 140px; padding: 10px 16px; align-items: center; cursor: pointer; transition: background 0.1s; }
     .tbl-main:hover { background: rgba(111,139,109,0.04); }
     .tbl-name { font-size: 13px; font-weight: 600; }
     .tbl-city { font-size: 11px; color: var(--stone); }
     .badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; display: inline-block; }
     .badge-ok { background: rgba(111,139,109,0.12); color: var(--palm); }
+    .badge-no { background: rgba(201,123,92,0.12); color: var(--clay); }
+    .badge-ai { background: rgba(111,139,109,0.1); color: var(--palm); font-size:10px; }
+    .badge-human { background: rgba(227,185,108,0.2); color: #b8860b; font-size:10px; }
+    .badge-pending { background: rgba(155,143,130,0.15); color: var(--stone); font-size:10px; }
     .badge-no { background: rgba(201,123,92,0.12); color: var(--clay); }
     .tbl-actions { display: flex; gap: 6px; align-items: center; }
     .btn-xs { padding: 4px 10px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 10px; font-weight: 600; border-radius: 6px; cursor: pointer; border: 1.5px solid rgba(61,46,38,0.15); background: none; color: var(--stone); white-space: nowrap; }
@@ -348,6 +352,9 @@ function showImages() {
   else if (curFilter==='no_desc') filtered = filtered.filter(s=>!s.long_description);
   else if (curFilter==='incomplete') filtered = filtered.filter(s=>!s.image_url||!s.long_description);
   else if (curFilter==='complete') filtered = filtered.filter(s=>s.image_url&&s.long_description);
+  else if (curFilter==='pending') filtered = filtered.filter(s=>!s.review_status||s.review_status==='pending');
+  else if (curFilter==='ai_complete') filtered = filtered.filter(s=>s.review_status==='ai_complete');
+  else if (curFilter==='human_reviewed') filtered = filtered.filter(s=>s.review_status==='human_reviewed');
 
   const done = filtered.filter(s=>s.image_url&&s.long_description).length;
   document.getElementById('mainTitle').textContent = curCity ? cap(curCity) : 'All Sites';
@@ -355,14 +362,14 @@ function showImages() {
 
   document.getElementById('mainBody').innerHTML = `
     <div class="filter-row">
-      ${['all','no_image','no_desc','incomplete','complete'].map(f =>
-        `<button class="fb ${curFilter===f?'active':''}" onclick="setF('${f}',this)">${{all:'All',no_image:'Missing image',no_desc:'Missing description',incomplete:'Incomplete',complete:'Complete'}[f]}</button>`
+      ${['all','no_image','no_desc','incomplete','complete','pending','ai_complete','human_reviewed'].map(f =>
+        `<button class="fb ${curFilter===f?'active':''}" onclick="setF('${f}',this)">${{all:'All',no_image:'Missing image',no_desc:'Missing description',incomplete:'Incomplete',complete:'Complete',pending:'Pending',ai_complete:'AI complete',human_reviewed:'Human reviewed'}[f]}</button>`
       ).join('')}
     </div>
     ${!filtered.length ? '<div class="empty">No sites match this filter.</div>' : `
     <div class="tbl">
       <div class="tbl-head">
-        <span>Site</span><span>City</span><span>Image</span><span>Desc</span><span>Actions</span>
+        <span>Site</span><span>City</span><span>Image</span><span>Desc</span><span>Status</span><span>Actions</span>
       </div>
       ${filtered.map(s => siteRow(s)).join('')}
     </div>`}`;
@@ -376,6 +383,7 @@ function siteRow(s) {
       <div class="tbl-city">${s.city_id}</div>
       <div><span class="badge ${s.image_url?'badge-ok':'badge-no'}">${s.image_url?'✓':'✗'}</span></div>
       <div><span class="badge ${s.long_description?'badge-ok':'badge-no'}">${s.long_description?'✓':'✗'}</span></div>
+      <div><span class="badge ${s.review_status==='human_reviewed'?'badge-human':s.review_status==='ai_complete'?'badge-ai':'badge-pending'}">${s.review_status==='human_reviewed'?'👤 Human':s.review_status==='ai_complete'?'🤖 AI':'⏳ Pending'}</span></div>
       <div class="tbl-actions" onclick="event.stopPropagation()">
         <button class="btn-xs" onclick="openModal('${s.id}','${s.name.replace(/'/g,"\\'")}','${s.city_id}')">Browse photos</button>
         <button class="expand-arrow">${exp?'▲':'▼'}</button>
