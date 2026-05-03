@@ -44,7 +44,7 @@ exports.handler = async function(event) {
   try {
     // Get all sites
     if (action === 'getSites') {
-      const res = await request('GET', '/rest/v1/sites?select=id,name,city_id,category,description,long_description,image_url&order=city_id,name');
+      const res = await request('GET', '/rest/v1/sites?select=id,name,city_id,category,description,long_description,image_url,review_status&order=city_id,name');
       return { statusCode: 200, headers, body: JSON.stringify(res.body) };
     }
 
@@ -72,7 +72,7 @@ exports.handler = async function(event) {
     // Update long description
     if (action === 'saveLongDesc') {
       const { name, cityId, longDesc } = data;
-      const res = await request('PATCH', `/rest/v1/sites?name=eq.${encodeURIComponent(name)}&city_id=eq.${cityId}`, { long_description: longDesc });
+      const res = await request('PATCH', `/rest/v1/sites?name=eq.${encodeURIComponent(name)}&city_id=eq.${cityId}`, { long_description: longDesc, review_status: 'human_reviewed' });
       return { statusCode: 200, headers, body: JSON.stringify({ saved: true }) };
     }
 
