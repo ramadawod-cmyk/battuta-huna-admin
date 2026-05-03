@@ -15,7 +15,7 @@ exports.handler = async function(event) {
   return new Promise((resolve) => {
     const payload = JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 8000,
+      max_tokens: 3000,
       messages: [{ role: 'user', content: user }],
       system
     });
@@ -30,7 +30,7 @@ exports.handler = async function(event) {
         'anthropic-version': '2023-06-01',
         'Content-Length': Buffer.byteLength(payload)
       },
-      timeout: 55000
+      timeout: 28000
     }, res => {
       let data = '';
       res.on('data', chunk => data += chunk);
