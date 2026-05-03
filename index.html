@@ -190,6 +190,10 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
           POI Generator
         </div>
+        <div class="sb-item" id="nav-sync" onclick="showSync()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+          Sync to Production
+        </div>
       </div>
       <div class="sb-footer">
         <button class="sb-logout" onclick="doLogout()">Sign out</button>
@@ -673,6 +677,84 @@ async function pushPoisToSupabase() {
     buildCityTree();
   } catch(e) {
     showToast('✗ Error: ' + e.message);
+  }
+}
+
+// ── SYNC TO PRODUCTION ────────────────────────────────────────────────────────
+function showSync() {
+  setActiveNav('nav-sync');
+  document.getElementById('mainTitle').textContent = 'Sync to Production';
+  document.getElementById('mainMeta').textContent = 'Push staging data to production Supabase';
+  document.getElementById('mainBody').innerHTML = `
+    <div style="max-width:600px;">
+      <div class="poi-step">
+        <div class="poi-step-title"><div class="poi-step-num">!</div> Important</div>
+        <p style="font-size:13px;color:var(--stone);line-height:1.7;">This will copy data from <strong style="color:var(--brown);">staging Supabase</strong> to <strong style="color:var(--brown);">production Supabase</strong>. Existing records will be updated (upsert). This action cannot be undone.</p>
+      </div>
+      <div class="poi-step">
+        <div class="poi-step-title"><div class="poi-step-num">1</div> Choose what to sync</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          ${[
+            ['all','Sync everything','Countries + Cities + Sites (recommended)'],
+            ['countries','Countries only','Sync the countries table'],
+            ['cities','Cities only','Sync the cities table'],
+            ['sites','Sites only','Sync all POIs and site data']
+          ].map(([val, label, desc]) => `
+            <div style="background:var(--offwhite);border:1.5px solid rgba(61,46,38,0.1);border-radius:10px;padding:12px 14px;cursor:pointer;transition:border-color 0.15s;" onclick="selectSyncTable('${val}',this)">
+              <div style="font-size:13px;font-weight:600;">${label}</div>
+              <div style="font-size:11px;color:var(--stone);margin-top:2px;">${desc}</div>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="poi-step">
+        <div class="poi-step-title"><div class="poi-step-num">2</div> Sync</div>
+        <button class="poi-push-btn" id="syncBtn" onclick="runSync()" disabled>Select a table first</button>
+        <div id="syncStatus" style="margin-top:12px;font-size:12px;color:var(--stone);"></div>
+      </div>
+    </div>`;
+}
+
+let selectedSyncTable = null;
+function selectSyncTable(val, el) {
+  selectedSyncTable = val;
+  document.querySelectorAll('[onclick^="selectSyncTable"]').forEach(e => e.style.borderColor = 'rgba(61,46,38,0.1)');
+  el.style.borderColor = 'var(--palm)';
+  const btn = document.getElementById('syncBtn');
+  btn.disabled = false;
+  btn.textContent = 'Sync ' + val + ' →';
+}
+
+async function runSync() {
+  if (!selectedSyncTable) return;
+  const btn = document.getElementById('syncBtn');
+  const status = document.getElementById('syncStatus');
+  btn.disabled = true;
+  btn.textContent = 'Syncing...';
+  status.innerHTML = '<div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px;"></div>Syncing to production...';
+
+  try {
+    const res = await fetch('/.netlify/functions/sync-to-prod', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ table: selectedSyncTable })
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    let msg = '✓ Sync complete — ';
+    if (selectedSyncTable === 'all') {
+      msg += `${data.countries} countries, ${data.cities} cities, ${data.sites} sites synced`;
+    } else {
+      msg += `${data.synced} records synced`;
+    }
+    status.textContent = msg;
+    btn.textContent = 'Sync again';
+    btn.disabled = false;
+    showToast(msg);
+  } catch(e) {
+    status.textContent = '✗ Error: ' + e.message;
+    btn.textContent = 'Retry';
+    btn.disabled = false;
   }
 }
 
