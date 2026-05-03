@@ -125,9 +125,34 @@
     .empty { padding: 40px; text-align: center; color: var(--stone); font-size: 13px; }
     .toast { position: fixed; bottom: 24px; right: 24px; background: var(--brown); color: var(--white); padding: 10px 18px; border-radius: 10px; font-size: 12px; font-weight: 600; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; }
     .toast.show { opacity: 1; }
-    .progress-bar { height: 4px; background: rgba(61,46,38,0.08); border-radius: 2px; overflow: hidden; margin-top: 4px; }
-    .progress-fill { height: 100%; background: var(--palm); border-radius: 2px; transition: width 0.3s; }
-  </style>
+/* POI GENERATOR */
+    .poi-gen-wrap { max-width: 900px; }
+    .poi-step { background: var(--white); border: 1.5px solid rgba(61,46,38,0.1); border-radius: 14px; padding: 20px; margin-bottom: 16px; }
+    .poi-step-title { font-size: 13px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .poi-step-num { width: 22px; height: 22px; border-radius: 50%; background: var(--palm); color: var(--white); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .poi-input-row { display: flex; gap: 10px; align-items: center; }
+    .poi-city-input { flex: 1; padding: 10px 14px; border: 1.5px solid rgba(61,46,38,0.15); border-radius: 10px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 14px; color: var(--brown); background: var(--offwhite); outline: none; }
+    .poi-city-input:focus { border-color: var(--palm); }
+    .poi-gen-btn { padding: 10px 20px; background: var(--palm); color: var(--white); font-family: 'Bricolage Grotesque', sans-serif; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; border: none; border-radius: 10px; cursor: pointer; white-space: nowrap; }
+    .poi-gen-btn:disabled { background: var(--stone); cursor: not-allowed; }
+    .poi-summary-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .poi-summary-pill { background: var(--offwhite); border-radius: 20px; padding: 4px 12px; font-size: 11px; color: var(--stone); }
+    .poi-summary-pill strong { color: var(--brown); }
+    .poi-actions { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .poi-card-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .poi-card { background: var(--offwhite); border: 1.5px solid rgba(61,46,38,0.1); border-radius: 12px; padding: 14px; position: relative; }
+    .poi-card.gem { border-color: rgba(111,139,109,0.4); background: rgba(111,139,109,0.04); }
+    .poi-card-del { position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; color: var(--stone); font-size: 16px; }
+    .poi-card-del:hover { color: var(--clay); }
+    .poi-field { margin-bottom: 8px; }
+    .poi-field label { font-size: 9px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--stone); display: block; margin-bottom: 3px; }
+    .poi-field input, .poi-field select, .poi-field textarea { width: 100%; padding: 6px 10px; border: 1.5px solid rgba(61,46,38,0.12); border-radius: 7px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 12px; color: var(--brown); background: var(--white); outline: none; }
+    .poi-field textarea { resize: vertical; min-height: 60px; font-family: 'Merriweather', serif; font-size: 12px; line-height: 1.6; }
+    .poi-field input:focus, .poi-field select:focus, .poi-field textarea:focus { border-color: var(--palm); }
+    .poi-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .gem-badge { display: inline-block; font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 8px; background: rgba(111,139,109,0.15); color: var(--palm); margin-bottom: 8px; }
+    .poi-push-btn { padding: 10px 20px; background: var(--brown); color: var(--white); font-family: 'Bricolage Grotesque', sans-serif; font-size: 12px; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; }
+    .poi-loading { padding: 40px; text-align: center; color: var(--stone); }
 </head>
 <body>
 
@@ -161,6 +186,10 @@
           <span class="sb-chevron" id="imgChev">▶</span>
         </div>
         <div class="sb-sub" id="cityTree"></div>
+        <div class="sb-item" id="nav-poi" onclick="showPoiGenerator()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+          POI Generator
+        </div>
       </div>
       <div class="sb-footer">
         <button class="sb-logout" onclick="doLogout()">Sign out</button>
@@ -443,6 +472,208 @@ function showToast(msg) {
   const t=document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── POI GENERATOR ─────────────────────────────────────────────────────────────
+let generatedPois = [];
+let poiCityName = '';
+
+function showPoiGenerator() {
+  setActiveNav('nav-poi');
+  document.getElementById('mainTitle').textContent = 'POI Generator';
+  document.getElementById('mainMeta').textContent = 'Generate and seed cultural POIs for any city';
+  document.getElementById('mainBody').innerHTML = `
+    <div class="poi-gen-wrap">
+      <div class="poi-step">
+        <div class="poi-step-title"><div class="poi-step-num">1</div> Generate POIs</div>
+        <div class="poi-input-row">
+          <input class="poi-city-input" id="poiCityInput" placeholder="Enter city name (e.g. Lisbon, Kyoto, Cairo)" onkeydown="if(event.key==='Enter')generatePois()"/>
+          <button class="poi-gen-btn" id="poiGenBtn" onclick="generatePois()">Generate 80 POIs</button>
+        </div>
+        <div id="poiGenStatus" style="margin-top:10px;font-size:12px;color:var(--stone);"></div>
+      </div>
+      <div class="poi-step" id="poiReviewStep" style="display:none;">
+        <div class="poi-step-title"><div class="poi-step-num">2</div> Review & Edit</div>
+        <div class="poi-summary-bar" id="poiSummaryBar"></div>
+        <div class="poi-actions">
+          <button class="btn-xs" onclick="copyPoiJson()">Copy JSON</button>
+          <button class="btn-xs" onclick="downloadPoiJson()">Download JSON</button>
+          <button class="poi-push-btn" onclick="pushPoisToSupabase()">Push to Supabase →</button>
+        </div>
+        <div class="poi-card-grid" id="poiCardGrid"></div>
+      </div>
+    </div>`;
+}
+
+async function generatePois() {
+  const city = document.getElementById('poiCityInput').value.trim();
+  if (!city) return;
+  poiCityName = city;
+
+  const btn = document.getElementById('poiGenBtn');
+  const status = document.getElementById('poiGenStatus');
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+  status.innerHTML = '<div class="spinner" style="width:20px;height:20px;display:inline-block;vertical-align:middle;margin-right:8px;"></div>Asking Claude to generate 80 POIs for ' + city + '...';
+
+  const systemPrompt = `You are a cultural travel data specialist. Generate accurate, detailed POI data for cities around the world. Always return valid JSON only — no preamble, no markdown, no explanation. Every POI must be real and verifiable. Descriptions should be evocative and specific, never generic. Mix well-known landmarks with genuine hidden gems locals would recommend.`;
+
+  const userPrompt = `Generate exactly 80 cultural POIs for ${city}. Return a JSON array where each object has: name (string), category (one of: historical | religious | museum | art | market | architecture | nature | neighbourhood), description (2-3 sentences specific and evocative), neighborhood (string), visit_duration_minutes (number), best_time (one of: morning | afternoon | evening | any), hidden_gem (boolean), lat (number), lng (number). Rules: at least 25 hidden_gem true, cover at least 6 categories, spread across neighborhoods, no duplicates, accurate coordinates.`;
+
+  try {
+    const res = await fetch('/.netlify/functions/admin-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ system: systemPrompt, user: userPrompt })
+    });
+    const data = await res.json();
+    const raw = data.text || '';
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('No JSON array found in response');
+    generatedPois = JSON.parse(match[0]);
+    status.textContent = `✓ Generated ${generatedPois.length} POIs for ${city}`;
+    btn.textContent = 'Regenerate';
+    btn.disabled = false;
+    renderPoiReview();
+  } catch(e) {
+    status.textContent = '✗ Error: ' + e.message;
+    btn.textContent = 'Generate 80 POIs';
+    btn.disabled = false;
+  }
+}
+
+function renderPoiReview() {
+  document.getElementById('poiReviewStep').style.display = 'block';
+  updatePoiSummary();
+  const grid = document.getElementById('poiCardGrid');
+  grid.innerHTML = generatedPois.map((poi, i) => poiCard(poi, i)).join('');
+}
+
+function poiCard(poi, i) {
+  return `<div class="poi-card ${poi.hidden_gem ? 'gem' : ''}" id="poi-card-${i}">
+    <button class="poi-card-del" onclick="deletePoi(${i})" title="Delete">✕</button>
+    ${poi.hidden_gem ? '<div class="gem-badge">Hidden gem</div>' : ''}
+    <div class="poi-field">
+      <label>Name</label>
+      <input value="${esc(poi.name)}" onchange="updatePoi(${i},'name',this.value)"/>
+    </div>
+    <div class="poi-field-row">
+      <div class="poi-field">
+        <label>Category</label>
+        <select onchange="updatePoi(${i},'category',this.value)">
+          ${['historical','religious','museum','art','market','architecture','nature','neighbourhood'].map(c =>
+            `<option ${poi.category===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div class="poi-field">
+        <label>Best time</label>
+        <select onchange="updatePoi(${i},'best_time',this.value)">
+          ${['morning','afternoon','evening','any'].map(t =>
+            `<option ${poi.best_time===t?'selected':''}>${t}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="poi-field">
+      <label>Description</label>
+      <textarea onchange="updatePoi(${i},'description',this.value)">${esc(poi.description)}</textarea>
+    </div>
+    <div class="poi-field-row">
+      <div class="poi-field">
+        <label>Neighbourhood</label>
+        <input value="${esc(poi.neighborhood||'')}" onchange="updatePoi(${i},'neighborhood',this.value)"/>
+      </div>
+      <div class="poi-field">
+        <label>Duration (min)</label>
+        <input type="number" value="${poi.visit_duration_minutes||60}" onchange="updatePoi(${i},'visit_duration_minutes',+this.value)"/>
+      </div>
+    </div>
+    <div class="poi-field-row">
+      <div class="poi-field">
+        <label>Lat</label>
+        <input type="number" step="0.0001" value="${poi.lat||''}" onchange="updatePoi(${i},'lat',+this.value)"/>
+      </div>
+      <div class="poi-field">
+        <label>Lng</label>
+        <input type="number" step="0.0001" value="${poi.lng||''}" onchange="updatePoi(${i},'lng',+this.value)"/>
+      </div>
+    </div>
+    <div class="poi-field">
+      <label><input type="checkbox" ${poi.hidden_gem?'checked':''} onchange="updatePoi(${i},'hidden_gem',this.checked);document.getElementById('poi-card-${i}').classList.toggle('gem',this.checked)"> Hidden gem</label>
+    </div>
+  </div>`;
+}
+
+function esc(s) { return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function updatePoi(i, field, val) {
+  generatedPois[i][field] = val;
+  updatePoiSummary();
+}
+
+function deletePoi(i) {
+  generatedPois.splice(i, 1);
+  renderPoiReview();
+}
+
+function updatePoiSummary() {
+  const total = generatedPois.length;
+  const gems = generatedPois.filter(p=>p.hidden_gem).length;
+  const cats = {};
+  generatedPois.forEach(p => { cats[p.category] = (cats[p.category]||0)+1; });
+  document.getElementById('poiSummaryBar').innerHTML = `
+    <div class="poi-summary-pill"><strong>${total}</strong> POIs</div>
+    <div class="poi-summary-pill"><strong>${gems}</strong> hidden gems</div>
+    ${Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([cat,n])=>
+      `<div class="poi-summary-pill"><strong>${n}</strong> ${cat}</div>`).join('')}`;
+}
+
+function copyPoiJson() {
+  navigator.clipboard.writeText(JSON.stringify(generatedPois, null, 2));
+  showToast('JSON copied to clipboard');
+}
+
+function downloadPoiJson() {
+  const blob = new Blob([JSON.stringify(generatedPois, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (poiCityName.toLowerCase().replace(/\s+/g,'-') || 'pois') + '-pois.json';
+  a.click();
+}
+
+async function pushPoisToSupabase() {
+  if (!generatedPois.length) return;
+  const cityId = poiCityName.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/-+$/,'');
+
+  showToast('Pushing ' + generatedPois.length + ' POIs to Supabase...');
+
+  const sitesToSave = generatedPois.map(p => ({
+    id: p.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').slice(0,60) + '-' + cityId,
+    city_id: cityId,
+    name: p.name,
+    category: p.category || 'Cultural Site',
+    tags: [p.category || 'Sightseeing'],
+    description: p.description || '',
+    lat: p.lat || null,
+    lng: p.lng || null,
+    map_url: `https://maps.google.com/?q=${encodeURIComponent(p.name+' '+poiCityName)}`,
+    wiki: p.name.replace(/ /g,'_'),
+    best_time: p.best_time || null,
+    source: 'admin_generated'
+  }));
+
+  try {
+    // Upsert city first
+    await db('saveCity', { id: cityId, name: poiCityName });
+    // Batch upsert sites
+    const res = await db('upsertSites', { sites: sitesToSave });
+    showToast('✓ Pushed ' + sitesToSave.length + ' POIs for ' + poiCityName);
+    // Reload sites list
+    const data = await db('getSites');
+    sites = Array.isArray(data) ? data : [];
+    buildCityTree();
+  } catch(e) {
+    showToast('✗ Error: ' + e.message);
+  }
 }
 
 if (sessionStorage.getItem('bha')) init();
