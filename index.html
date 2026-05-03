@@ -399,7 +399,11 @@ function expRow(s) {
       </div>
       <div>
         <div class="exp-label">Description</div>
-        <div class="exp-desc">${s.long_description || '<em style="color:#9b8f82;">No description yet. Open the site in the app to generate one.</em>'}</div>
+        <textarea id="desc-edit-${s.id}" style="width:100%;padding:10px 12px;border:1.5px solid rgba(61,46,38,0.1);border-radius:8px;font-family:'Merriweather',serif;font-size:12px;line-height:1.7;color:var(--stone);background:var(--white);min-height:100px;resize:vertical;outline:none;">${s.long_description||''}</textarea>
+        <div style="margin-top:8px;display:flex;gap:8px;">
+          <button class="btn-xs pri" onclick="saveDesc('${s.id}','${s.name.replace(/'/g,"\\'")}','${s.city_id}')">Save description</button>
+          <span style="font-size:11px;color:var(--stone);line-height:1;display:flex;align-items:center;">or open site in app to auto-generate</span>
+        </div>
       </div>
     </div>
   </div>`;
@@ -409,6 +413,17 @@ function toggleExp(id) {
   expanded.has(id) ? expanded.delete(id) : expanded.add(id);
   const s = sites.find(x=>x.id===id);
   if (s) { const el = document.getElementById('r-'+id); if (el) el.outerHTML = siteRow(s); }
+}
+
+async function saveDesc(siteId, name, cityId) {
+  const textarea = document.getElementById('desc-edit-' + siteId);
+  const longDesc = textarea?.value?.trim();
+  if (!longDesc) return;
+  await db('saveLongDesc', { name, cityId, longDesc });
+  const site = sites.find(s => s.id === siteId);
+  if (site) site.long_description = longDesc;
+  buildCityTree();
+  showToast('✓ Description saved for ' + name);
 }
 
 function setF(f, btn) {
@@ -490,7 +505,13 @@ function showPoiGenerator() {
         <div class="poi-step-title"><div class="poi-step-num">1</div> Generate POIs</div>
         <div class="poi-input-row">
           <input class="poi-city-input" id="poiCityInput" placeholder="Enter city name (e.g. Lisbon, Kyoto, Cairo)" onkeydown="if(event.key==='Enter')generatePois()"/>
-          <button class="poi-gen-btn" id="poiGenBtn" onclick="generatePois()">Generate 80 POIs</button>
+          <select id="poiCountSelect" style="padding:10px 12px;border:1.5px solid rgba(61,46,38,0.15);border-radius:10px;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;color:var(--brown);background:var(--offwhite);outline:none;">
+            <option value="20">20 POIs</option>
+            <option value="40">40 POIs</option>
+            <option value="60">60 POIs</option>
+            <option value="80" selected>80 POIs</option>
+          </select>
+          <button class="poi-gen-btn" id="poiGenBtn" onclick="generatePois()">Generate POIs</button>
         </div>
         <div id="poiGenStatus" style="margin-top:10px;font-size:12px;color:var(--stone);"></div>
       </div>
@@ -511,16 +532,17 @@ async function generatePois() {
   const city = document.getElementById('poiCityInput').value.trim();
   if (!city) return;
   poiCityName = city;
+  const count = parseInt(document.getElementById('poiCountSelect').value) || 40;
 
   const btn = document.getElementById('poiGenBtn');
   const status = document.getElementById('poiGenStatus');
   btn.disabled = true;
   btn.textContent = 'Generating...';
-  status.innerHTML = '<div class="spinner" style="width:20px;height:20px;display:inline-block;vertical-align:middle;margin-right:8px;"></div>Asking Claude to generate 80 POIs for ' + city + '...';
+  status.innerHTML = '<div class="spinner" style="width:20px;height:20px;display:inline-block;vertical-align:middle;margin-right:8px;"></div>Asking Claude to generate ' + count + ' POIs for ' + city + '...';
 
   const systemPrompt = `You are a cultural travel data specialist. Generate accurate, detailed POI data for cities around the world. Always return valid JSON only — no preamble, no markdown, no explanation. Every POI must be real and verifiable. Descriptions should be evocative and specific, never generic. Mix well-known landmarks with genuine hidden gems locals would recommend.`;
 
-  const userPrompt = `Generate exactly 80 cultural POIs for ${city}. Return a JSON array where each object has: name (string), category (one of: historical | religious | museum | art | market | architecture | nature | neighbourhood), description (2-3 sentences specific and evocative), neighborhood (string), visit_duration_minutes (number), best_time (one of: morning | afternoon | evening | any), hidden_gem (boolean), lat (number), lng (number). Rules: at least 25 hidden_gem true, cover at least 6 categories, spread across neighborhoods, no duplicates, accurate coordinates.`;
+  const userPrompt = `Generate exactly ${count} cultural POIs for ${city}. Return a JSON array where each object has: name (string), category (one of: historical | religious | museum | art | market | architecture | nature | neighbourhood), description (2-3 sentences specific and evocative), neighborhood (string), visit_duration_minutes (number), best_time (one of: morning | afternoon | evening | any), hidden_gem (boolean), lat (number), lng (number). Rules: at least ${Math.floor(count*0.3)} hidden_gem true, cover at least 6 categories, spread across neighborhoods, no duplicates, accurate coordinates.`;
 
   try {
     const res = await fetch('/.netlify/functions/admin-ai', {
@@ -539,7 +561,7 @@ async function generatePois() {
     renderPoiReview();
   } catch(e) {
     status.textContent = '✗ Error: ' + e.message;
-    btn.textContent = 'Generate 80 POIs';
+    btn.textContent = 'Generate POIs';
     btn.disabled = false;
   }
 }
