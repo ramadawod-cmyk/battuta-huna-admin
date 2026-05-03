@@ -540,29 +540,41 @@ async function generatePois() {
   const city = document.getElementById('poiCityInput').value.trim();
   if (!city) return;
   poiCityName = city;
-  const count = parseInt(document.getElementById('poiCountSelect').value) || 40;
+  const totalCount = parseInt(document.getElementById('poiCountSelect').value) || 20;
+  const BATCH = 10; // max per API call to avoid timeout
+  const batches = Math.ceil(totalCount / BATCH);
 
   const btn = document.getElementById('poiGenBtn');
   const status = document.getElementById('poiGenStatus');
   btn.disabled = true;
   btn.textContent = 'Generating...';
-  status.innerHTML = '<div class="spinner" style="width:20px;height:20px;display:inline-block;vertical-align:middle;margin-right:8px;"></div>Asking Claude to generate ' + count + ' POIs for ' + city + '...';
 
   const systemPrompt = `You are a cultural travel data specialist. Generate accurate, detailed POI data for cities around the world. Always return valid JSON only — no preamble, no markdown, no explanation. Every POI must be real and verifiable. Descriptions should be evocative and specific, never generic. Mix well-known landmarks with genuine hidden gems locals would recommend.`;
 
-  const userPrompt = `Generate exactly ${count} cultural POIs for ${city}. Return a JSON array where each object has: name (string), category (one of: historical | religious | museum | art | market | architecture | nature | neighbourhood), description (2-3 sentences specific and evocative), neighborhood (string), visit_duration_minutes (number), best_time (one of: morning | afternoon | evening | any), hidden_gem (boolean), lat (number), lng (number). Rules: at least ${Math.floor(count*0.3)} hidden_gem true, cover at least 6 categories, spread across neighborhoods, no duplicates, accurate coordinates.`;
+  generatedPois = [];
 
   try {
-    const res = await fetch('/.netlify/functions/admin-ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ system: systemPrompt, user: userPrompt })
-    });
-    const data = await res.json();
-    const raw = data.text || '';
-    const match = raw.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error('No JSON array found in response');
-    generatedPois = JSON.parse(match[0]);
+    for (let b = 0; b < batches; b++) {
+      const batchCount = Math.min(BATCH, totalCount - b * BATCH);
+      const existing = generatedPois.map(p => p.name).join(', ');
+      status.innerHTML = `<div class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle;margin-right:8px;"></div>Batch ${b+1}/${batches} — fetching ${batchCount} POIs...`;
+
+      const userPrompt = `Generate exactly ${batchCount} cultural POIs for ${city}. Return a JSON array where each object has: name (string), category (one of: historical | religious | museum | art | market | architecture | nature | neighbourhood), description (2-3 sentences specific and evocative), neighborhood (string), visit_duration_minutes (number), best_time (one of: morning | afternoon | evening | any), hidden_gem (boolean), lat (number), lng (number).${existing ? ' Do NOT include these already generated: ' + existing + '.' : ''} Rules: some hidden_gem true, spread across neighborhoods, no duplicates, accurate coordinates.`;
+
+      const res = await fetch('/.netlify/functions/admin-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ system: systemPrompt, user: userPrompt })
+      });
+      const data = await res.json();
+      const raw = data.text || '';
+      const match = raw.match(/\[[\s\S]*\]/);
+      if (!match) throw new Error('Batch ' + (b+1) + ' returned no JSON');
+      const batch = JSON.parse(match[0]);
+      generatedPois = generatedPois.concat(batch);
+      status.textContent = `✓ ${generatedPois.length}/${totalCount} POIs generated...`;
+    }
+
     status.textContent = `✓ Generated ${generatedPois.length} POIs for ${city}`;
     btn.textContent = 'Regenerate';
     btn.disabled = false;
