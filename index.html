@@ -561,13 +561,13 @@ async function generatePois() {
 
       const userPrompt = `Generate exactly ${batchCount} cultural POIs for ${city}. Return a JSON array where each object has: name (string), category (one of: historical | religious | museum | art | market | architecture | nature | neighbourhood), description (2-3 sentences specific and evocative), neighborhood (string), visit_duration_minutes (number), best_time (one of: morning | afternoon | evening | any), hidden_gem (boolean), lat (number), lng (number).${existing ? ' Do NOT include these already generated: ' + existing + '.' : ''} Rules: some hidden_gem true, spread across neighborhoods, no duplicates, accurate coordinates.`;
 
-      const res = await fetch('/.netlify/functions/admin-ai', {
+      const res = await fetch('https://battutahuna.com/.netlify/functions/plan-agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ system: systemPrompt, user: userPrompt })
+        body: JSON.stringify({ system: systemPrompt, messages: [{ role: 'user', content: userPrompt }] })
       });
       const data = await res.json();
-      const raw = data.text || '';
+      const raw = data.content?.[0]?.text || '';
       const match = raw.match(/\[[\s\S]*\]/);
       if (!match) throw new Error('Batch ' + (b+1) + ' returned no JSON');
       const batch = JSON.parse(match[0]);
